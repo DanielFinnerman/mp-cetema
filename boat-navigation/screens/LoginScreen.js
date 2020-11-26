@@ -1,19 +1,21 @@
 import React, { Component } from 'react';
 import { StyleSheet, Text, View, TextInput, Button, Alert, ActivityIndicator } from 'react-native';
-import firebase from '../helpers/firebase';
+import firebase from '../database/firebase';
 
 // https://www.positronx.io/react-native-firebase-login-and-user-registration-tutorial/
 
 export default class Login extends Component {
-  
+
   constructor() {
     super();
-    this.state = { 
-      email: '', 
+    this.state = {
+      email: '',
       password: '',
       isLoading: false
     }
   }
+
+
 
   updateInputVal = (val, prop) => {
     const state = this.state;
@@ -22,39 +24,86 @@ export default class Login extends Component {
   }
 
   userLogin = () => {
-    if(this.state.email === '' && this.state.password === '') {
+    if (this.state.email === '' || this.state.password === '') {
       Alert.alert('Enter details to signin!')
     } else {
       this.setState({
         isLoading: true,
       })
       firebase
-      .auth()
-      .signInWithEmailAndPassword(this.state.email, this.state.password)
-      .then((res) => {
-        console.log(res)
-        console.log('User logged-in successfully!')
-        this.setState({
-          isLoading: false,
-          email: '', 
-          password: ''
+        .auth()
+        .signInWithEmailAndPassword(this.state.email, this.state.password)
+        .then((res) => {
+          console.log(res)
+          console.log('User logged-in successfully!')
+          if (res) {
+            this.setState({
+              isLoading: false,
+              email: '',
+              password: ''
+            })
+            this.props.navigation.navigate('Loading')
+          }
+          else {
+            Alert.alert('Login failed')
+            console.log('Login failed')
+          }
         })
-        this.props.navigation.navigate('MapScreen')
-      })
-      .catch(error => this.setState({ errorMessage: error.message }))
+        .catch(error => {
+          if (error.code === 'auth/wrong-password') {
+            this.setState({
+              isLoading: false,
+              password: ''
+            })
+            Alert.alert('That password is incorrect!');
+            console.log('Incorrect password!');
+            this.props.navigation.navigate('Login')
+          }
+
+          if (error.code === 'auth/invalid-email') {
+            this.setState({
+              isLoading: false,
+              password: ''
+            })
+            Alert.alert('Email address is invalid')
+            console.log('Email is invalid')
+            this.props.navigation.navigate('Login')
+          }
+
+          if (error.code === 'auth/too-many-requests') {
+            this.setState({
+              isLoading: false,
+              password: ''
+            })
+            Alert.alert('Too many login attempts')
+            console.log('Too many logins')
+            this.props.navigation.navigate('Login')
+          }
+          if (error.code === 'auth/user-not-found') {
+            this.setState({
+              isLoading: false,
+              password: ''
+            })
+            Alert.alert('This email is not registered. Please sign up')
+            console.log('This email is not registered')
+            this.props.navigation.navigate('Signup')
+          }
+          console.error(error);
+          //console.error(error.code)
+        })
     }
   }
 
   render() {
-    if(this.state.isLoading){
-      return(
+    if (this.state.isLoading) {
+      return (
         <View style={styles.preloader}>
-          <ActivityIndicator size="large" color="#9E9E9E"/>
+          <ActivityIndicator size="large" color="#9E9E9E" />
         </View>
       )
-    }    
+    }
     return (
-      <View style={styles.container}>  
+      <View style={styles.container}>
         <TextInput
           style={styles.inputStyle}
           placeholder="Email"
@@ -68,18 +117,18 @@ export default class Login extends Component {
           onChangeText={(val) => this.updateInputVal(val, 'password')}
           maxLength={15}
           secureTextEntry={true}
-        />   
+        />
         <Button
           color="#3740FE"
-          title="Login"
+          title="Signin"
           onPress={() => this.userLogin()}
-        />   
+        />
 
-        <Text 
+        <Text
           style={styles.loginText}
-          onPress={() => this.props.navigation.navigate('RegisterScreen')}>
+          onPress={() => this.props.navigation.navigate('Signup')}>
           Don't have account? Click here to signup
-        </Text>                          
+        </Text>
       </View>
     );
   }

@@ -2,8 +2,6 @@ import React, { Component } from 'react';
 import { StyleSheet, Text, View, TextInput, Button, Alert, ActivityIndicator } from 'react-native';
 import firebase from '../database/firebase';
 
-// https://www.positronx.io/react-native-firebase-login-and-user-registration-tutorial/
-
 export default class Signup extends Component {
   
   constructor() {
@@ -23,7 +21,7 @@ export default class Signup extends Component {
   }
 
   registerUser = () => {
-    if(this.state.email === '' && this.state.password === '') {
+    if(this.state.email === '' || this.state.password === '' || this.state.displayName === '') {
       Alert.alert('Enter details to signup!')
     } else {
       this.setState({
@@ -43,9 +41,62 @@ export default class Signup extends Component {
           email: '', 
           password: ''
         })
-        this.props.navigation.navigate('LoginScreen')
+        this.props.navigation.navigate('Loading')
       })
-      .catch(error => this.setState({ errorMessage: error.message }))      
+      .catch(error => {
+        if (error.code === 'auth/wrong-password') {
+          this.setState({
+            isLoading: false,
+            password: ''
+          })
+          Alert.alert('That password is incorrect!');
+          console.log('Incorrect password!');
+        }
+    
+        if (error.code === 'auth/invalid-email') {
+          this.setState({
+            isLoading: false,
+            password: ''
+          })
+          Alert.alert('Email address is invalid')
+          console.log('Email is invalid')
+        }
+
+        if (error.code === 'auth/too-many-requests') {
+          this.setState({
+            isLoading: false,
+            password: ''
+          })
+          Alert.alert('Too many login attempts')
+          console.log('Too many logins')
+        }
+        if (error.code === 'auth/email-already-in-use') {
+          this.setState({
+            isLoading: false,
+            password: ''
+          })
+          Alert.alert('Email already registered')
+          console.log('Email already registered')
+        }
+        if (error.code === 'auth/user-not-found') {
+          this.setState({
+            isLoading: false,
+            password: ''
+          })
+          Alert.alert('This email is not registered. Please sign up')
+          console.log('This email is not registered')
+        }
+        if (error.code === 'auth/weak-password') {
+          this.setState({
+            isLoading: false,
+            password: ''
+          })
+          Alert.alert('This password is too weak, atleast 6 characters')
+          console.log('Password weak')
+        }
+        console.error(error);
+        //console.error(error.code)
+      })
     }
   }
 
@@ -79,15 +130,16 @@ export default class Signup extends Component {
           maxLength={15}
           secureTextEntry={true}
         />   
+        
         <Button
           color="#3740FE"
-          title="Register"
+          title="Signup"
           onPress={() => this.registerUser()}
         />
 
         <Text 
           style={styles.loginText}
-          onPress={() => this.props.navigation.navigate('LoginScreen')}>
+          onPress={() => this.props.navigation.navigate('Login')}>
           Already Registered? Click here to login
         </Text>                          
       </View>
